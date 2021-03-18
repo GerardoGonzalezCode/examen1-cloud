@@ -1,41 +1,39 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-
-var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(logger('dev'));
+const config = require('./config.js');
+const express= require('express');
+const app=express();
+const ToneAnalyzerV3 = require('ibm-watson/tone-analyzer/v3');
+const LanguageTranslatorV3 = require('ibm-watson/language-translator/v3');
+const { IamAuthenticator } = require('ibm-watson/auth');
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded());
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.get('/sentiment',(req,res) => {
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+  console.log(req.query.message);
+
+  const toneAnalyzer = new ToneAnalyzerV3({
+    version: '2017-09-21',
+    authenticator: new IamAuthenticator({
+      apikey: config.APIKEY_TONE,
+    }),
+    url: config.URL_TONE,
+  });
+
+  const toneParams = {
+    toneInput: { 'text': req.query.message },
+    contentType: 'application/json',
+    acceptLanguage:'es',
+  };
+
+  toneAnalyzer.tone(toneParams)
+    .then(toneAnalysis => {
+      console.log(JSON.stringify(toneAnalysis, null, 2)); 
+      console.log({"sentiment":toneAnalysis.result.document_tone.tones[0].tone_id });
+      res.send(toneAnalysis.result.document_tone.tones[0].tone_id );
+    })
+    .catch(err => {
+      console.log('error:', err);
+    });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-module.exports = app;
+app.listen(config.PORT,()=> console.log(`listening on port ${config.PORT}`));
