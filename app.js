@@ -7,7 +7,7 @@ const { IamAuthenticator } = require('ibm-watson/auth');
 app.use(express.json());
 app.use(express.urlencoded());
 
-app.get('/sentiment',(req,res) => {
+app.post('/sentiment',(req,res) => {
 
   console.log(req.body);
 
