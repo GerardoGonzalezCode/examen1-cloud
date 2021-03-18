@@ -9,7 +9,7 @@ app.use(express.urlencoded());
 
 app.get('/sentiment',(req,res) => {
 
-  console.log(req.query.message);
+  console.log(req.body);
 
   const toneAnalyzer = new ToneAnalyzerV3({
     version: '2017-09-21',
@@ -20,7 +20,7 @@ app.get('/sentiment',(req,res) => {
   });
 
   const toneParams = {
-    toneInput: { 'text': req.query.message },
+    toneInput: req.body,
     contentType: 'application/json',
     acceptLanguage:'es',
   };
